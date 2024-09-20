@@ -1,29 +1,47 @@
-# medical-diagnosis-extraction
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# FinMedAI
+## Project Description
+Our project aims to streamline the extraction of medical diagnoses from handwritten medical forms using a state-of-the-art vision-language model. The solution helps digitize these forms to improve efficiency and accuracy in claims processing.
 
-## Getting Started
+### View our website: [FinMedAI](https://finmedai.vercel.app/)
+*For the website to be fully functional, you need to create your own API endpoint for which the steps are mentioned below*
 
-Clone the repository
-```
-git clone https://github.com/chetali-1004/portfolio.git
-```
-Install dependencies
-```
-npm install
-```
-Run locally (localhost)
-```bash
-npm run dev
-```
-To test on any other device:
-  1. Find IP address of your laptop.
-  2. See the port number on which localhost is running
-  3. Enter the url on your mobile as - IP_addr:Port_num
-     Eg- IP address - 172.11.2.3
-         Port number - 3000
-         Enter 172.11.2.3:3000 on the device
-  4. If this does not work, try connecting your other device and laptop to the same network
-     
-Deployed Link: 
-[`portfolio-website`](https://portfolio-drmo.vercel.app/)
+### Link for frontend repo: [Link](https://github.com/hypervenomjr/Medical-Diagnosis-Extrtaction)
+
+## Usage
+### *Note on GPU and NVIDIA Drivers*:
+To use the Qwen2-VL-7B-Instruct-GPTQ-Int4 model with Auto-GPTQ, ensure the following GPU requirements are met:
+
+- A *CUDA-enabled NVIDIA GPU* with at least *10-12 GB of VRAM* is required, but *24 GB or more* is recommended for smoother performance.
+- *NVIDIA CUDA* drivers should be properly installed and up-to-date to support efficient GPU computation. This is essential for leveraging CUDA’s parallel processing capabilities during model inference.
+
+
+### If GPU requirements are fulfilled, follow these steps to set up the environment:
+1. Ensure Python 3.10 or higher is installed.
+2. Create and activate a virtual environment to manage dependencies:
+   
+   ```
+   python -m venv venv
+   venv\Scripts\activate
+   ```
+3. Interpreter: Select the corresponding python interpretor (ctrl+shift+P - to open command palette and select interpretor)
+4. Dependencies Installation:
+   
+   ```
+    pip install -r requirements.txt
+   ```
+5. Run main.py to perform diagnosis extraction
+   ```
+   python main.py path/to/folder/of/images
+   ```
+
+### You can also try our code at Google Colab Notebook : [Click to open](https://colab.research.google.com/drive/18c7BLaMW49aplc3Y8BOYHrxdDC05ByuQ?usp=sharing)
+
+### Create your own API endpoint (for testing purposes):
+1. Login/SignUp on [ngrok](https://ngrok.com/)
+2. Open the [Google Colab Notebook](https://colab.research.google.com/drive/1MCtk-5Ikm0I-p8hZV1enXEZut0e08dar?usp=sharing )
+3. Enter the copied AuthToken from ngrok website in the above notebook
+4. Copy the generated endpoint and append /process_images to it to test using postman/bruno.
+   
+
+
 
