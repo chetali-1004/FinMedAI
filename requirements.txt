@@ -8,3 +8,7 @@ optimum
 pyarrow==15.0.2
 nest_asyncio
 git+https://github.com/huggingface/transformers
+fastapi 
+uvicorn 
+pyngrok
+python-multipart
