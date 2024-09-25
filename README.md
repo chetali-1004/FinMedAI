@@ -38,7 +38,7 @@ To use the Qwen2-VL-7B-Instruct-GPTQ-Int4 model with Auto-GPTQ, ensure the follo
 
 ### Create your own API endpoint (for testing purposes):
 1. Login/SignUp on [ngrok](https://ngrok.com/)
-2. Open the [Google Colab Notebook](https://colab.research.google.com/drive/1MCtk-5Ikm0I-p8hZV1enXEZut0e08dar?usp=sharing )
+2. Open the [Google Colab Notebook](https://colab.research.google.com/drive/1CZ8X9y4x7RgQNCah75EZ-8CSlJDUqSFj?usp=sharing)
 3. Enter the copied AuthToken from ngrok website in the above notebook
 4. Copy the generated endpoint and append /process_images to it to test using postman/bruno.
    
