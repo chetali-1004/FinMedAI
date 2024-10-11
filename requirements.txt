@@ -1,14 +1,8 @@
 pandas
-tesseract
-timm
-pytesseract
-qwen-vl-utils
-auto-gptq
-optimum
-pyarrow==15.0.2
-nest_asyncio
-git+https://github.com/huggingface/transformers
+groq
 fastapi 
 uvicorn 
 pyngrok
 python-multipart
+requests
+python-dotenv
