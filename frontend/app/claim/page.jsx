@@ -62,7 +62,7 @@ const ClaimPage = () => {
       <div className="flex-grow flex items-center justify-center px-4 sm:px-6 lg:px-8">
         <div className="container w-3/4 space-y-8 mx-auto">
           <div>
-            <h1 className="text-3xl font-extrabold text-center text-[#E8F1F5]">
+            <h1 className="text-3xl font-extrabold text-center text-[#E8F1F5] pt-5">
               Claim Page for Patient
             </h1>
           </div>
