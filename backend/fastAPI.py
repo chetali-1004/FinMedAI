@@ -12,6 +12,8 @@ import json
 import uvicorn
 from threading import Thread
 from dotenv import load_dotenv
+from pyngrok import ngrok, conf
+import getpass
 
 load_dotenv()
 
@@ -283,19 +285,23 @@ async def handle_images(images: list[UploadFile] = File(...)):
         logging.error(f"Error in handle_images: {e}")
         raise HTTPException(status_code=500, detail=str(e))
     
-
-
-def run():
-    uvicorn.run(app, host="0.0.0.0", port=5000)
-
 # thread = Thread(target=run)
-# thread.start()
+    # thread.start()
+
+# if __name__ == "__main__":
+#     def run():
+#         uvicorn.run(app, host="0.0.0.0", port=5000)
+
+#     thread = Thread(target=run)
+#     thread.start()
+    
+#     print("Enter your authtoken, which can be copied from https://dashboard.ngrok.com/get-started/your-authtoken")
+#     conf.get_default().auth_token = getpass.getpass()
+#     # Start ngrok
+#     public_url = ngrok.connect(5000)
+#     print("FastAPI is running on:", public_url)
 
 if __name__ == "__main__":
-    uvicorn.run(app, host='localhost', port=8000)
-    
-# def run():
-#     uvicorn.run(app, host="0.0.0.0", port=5000)
+    uvicorn.run(app, host="0.0.0.0", port=5000)
 
-# thread = Thread(target=run)
-# thread.start()
+
