@@ -8,6 +8,7 @@ const redis = require("redis");
 app.use(express.json());
 app.use(cors());
 
+// Encapsulate the cache logic to avoid redeclaration conflicts
 (() => {
   // In-memory cache setup for frequent clicks
   const inMemoryCache = new Map();
@@ -47,160 +48,191 @@ app.use(cors());
   }
 
   // Route: POST /update
-  // Route: POST /update
-  app.post("/update", async function (req, res) {
-    console.log("Received a post request to /update");
-    const createPayload = req.body;
-    console.log("Received payload:", createPayload);
+// Route: POST /update
+app.post("/update", async function (req, res) {
+  console.log("Received a post request to /update");
+  const createPayload = req.body;
+  console.log("Received payload:", createPayload);
 
-    const parsedPayload = mainreq.safeParse(createPayload);
+  const parsedPayload = mainreq.safeParse(createPayload);
 
-    if (!parsedPayload.success) {
-      console.log("Validation failed:", parsedPayload.error);
-      console.log("Validation errors:", parsedPayload.error.errors);
+  if (!parsedPayload.success) {
+    console.log("Validation failed:", parsedPayload.error);
+    console.log("Validation errors:", parsedPayload.error.errors);
 
-      return res.status(400).json({
-        msg: "You sent wrong inputs",
-        errors: parsedPayload.error.errors,
-      });
-    }
-
-    const prescriptionsWithDateStrings = parsedPayload.data.prescriptions?.map(
-      (prescription) => {
-        const mappedPrescription = {
-          extractedDiagnosis: prescription.extractedDiagnosis,
-        };
-
-        if (prescription.date !== undefined) {
-          mappedPrescription.date = prescription.date;
-        }
-
-        return mappedPrescription;
-      }
-    );
-
-    // Check if the patient is already cached
-    const patientKey = `${createPayload.name}-${createPayload.age}-${createPayload.phone}`;
-    let cachedPatient = getFromInMemoryCache(patientKey);
-
-    // If found in in-memory cache
-    if (cachedPatient) {
-      console.log(
-        "Returning cached patient from in-memory cache:",
-        cachedPatient
-      );
-
-      // Append new diagnoses and prescriptions to the cached patient
-      try {
-        cachedPatient.diagnoses.push(...createPayload.diagnoses);
-        if (prescriptionsWithDateStrings) {
-          cachedPatient.prescriptions.push(...prescriptionsWithDateStrings);
-        }
-        // Save the updated patient data back to the in-memory cache
-        cacheInMemory(patientKey, cachedPatient);
-
-        return res.json({
-          msg: "Diagnosis and Prescriptions added",
-        });
-      } catch (error) {
-        console.error("Error updating cached patient:", error);
-        return res.status(500).json({
-          msg: "Error updating cached patient",
-          error: error.message,
-        });
-      }
-    }
-
-    // If not found in memory, check Redis cache
-    cachedPatient = await getFromRedisCache(patientKey);
-    if (cachedPatient) {
-      console.log("Returning cached patient from Redis cache:", cachedPatient);
-
-      // Append new diagnoses and prescriptions to the cached patient
-      try {
-        cachedPatient.diagnoses.push(...createPayload.diagnoses);
-        if (prescriptionsWithDateStrings) {
-          cachedPatient.prescriptions.push(...prescriptionsWithDateStrings);
-        }
-        // Save the updated patient data back to Redis and in-memory cache
-        await cacheInRedis(patientKey, cachedPatient);
-        cacheInMemory(patientKey, cachedPatient);
-
-        return res.json({
-          msg: "Diagnosis and Prescriptions added",
-        });
-      } catch (error) {
-        console.error("Error updating cached patient in Redis:", error);
-        return res.status(500).json({
-          msg: "Error updating cached patient in Redis",
-          error: error.message,
-        });
-      }
-    }
-
-    // If patient is not in any cache, query the database
-    const existingPatient = await patient.findOne({
-      name: createPayload.name,
-      age: createPayload.age,
-      phone: createPayload.phone,
+    return res.status(400).json({
+      msg: "You sent wrong inputs",
+      errors: parsedPayload.error.errors,
     });
+  }
 
-    if (existingPatient) {
-      // Append new diagnoses and prescriptions
-      existingPatient.diagnoses.push(...createPayload.diagnoses);
-      if (prescriptionsWithDateStrings) {
-        existingPatient.prescriptions.push(...prescriptionsWithDateStrings);
-      }
-
-      // Mark the fields as modified
-      existingPatient.markModified("diagnoses");
-      existingPatient.markModified("prescriptions");
-
-      // Save the updated document
-      await existingPatient.save();
-
-      // Cache patient in both memory and Redis
-      cacheInMemory(patientKey, existingPatient);
-      await cacheInRedis(patientKey, existingPatient);
-
-      return res.json({
-        msg: "Diagnosis and Prescriptions added",
-      });
-    } else {
-      const newPatientPayload = {
-        name: createPayload.name,
-        email: createPayload.email,
-        phone: createPayload.phone,
-        diagnoses: createPayload.diagnoses,
-        prescriptions: prescriptionsWithDateStrings,
+  const prescriptionsWithDateStrings =
+    parsedPayload.data.prescriptions?.map((prescription) => {
+      const mappedPrescription = {
+        extractedDiagnosis: prescription.extractedDiagnosis,
       };
 
-      // Conditionally add optional fields
-      if (createPayload.age !== undefined) {
-        newPatientPayload.age = createPayload.age;
-      }
-      if (createPayload.sex !== undefined) {
-        newPatientPayload.sex = createPayload.sex;
+      if (prescription.date !== undefined) {
+        mappedPrescription.date = prescription.date;
       }
 
-      try {
-        const newPatient = await patient.create(newPatientPayload);
+      return mappedPrescription;
+    });
 
-        cacheInMemory(patientKey, newPatient);
-        await cacheInRedis(patientKey, newPatient);
+  // Check if the patient is already cached
+  const patientKey = `${createPayload.name}-${createPayload.age}-${createPayload.phone}`;
+  let cachedPatient = getFromInMemoryCache(patientKey);
 
-        return res.json({
-          msg: "New patient created successfully",
-        });
-      } catch (error) {
-        console.error("Error creating new patient:", error);
-        return res.status(500).json({
-          msg: "Error creating new patient",
-          error: error.message,
-        });
+  // If found in in-memory cache
+  if (cachedPatient) {
+    console.log("Returning cached patient from in-memory cache:", cachedPatient);
+
+    // Append new diagnoses and prescriptions to the cached patient
+    try {
+      cachedPatient.diagnoses.push(...createPayload.diagnoses);
+      if (prescriptionsWithDateStrings) {
+        cachedPatient.prescriptions.push(...prescriptionsWithDateStrings);
       }
+
+      // Update the database with the new diagnoses and prescriptions
+      await patient.updateOne(
+        { name: createPayload.name, age: createPayload.age, phone: createPayload.phone },
+        { $push: { diagnoses: { $each: createPayload.diagnoses }, prescriptions: { $each: prescriptionsWithDateStrings } } }
+      );
+
+      // Save the updated patient data back to the in-memory cache
+      cacheInMemory(patientKey, cachedPatient);
+
+      return res.json({
+        msg: "Diagnosis and Prescriptions added to cache and updated in database",
+      });
+    } catch (error) {
+      console.error("Error updating cached patient:", error);
+      return res.status(500).json({
+        msg: "Error updating cached patient",
+        error: error.message,
+      });
+    }
+  }
+
+  // If not found in memory, check Redis cache
+  cachedPatient = await getFromRedisCache(patientKey);
+  if (cachedPatient) {
+    console.log("Returning cached patient from Redis cache:", cachedPatient);
+
+    // Append new diagnoses and prescriptions to the cached patient
+    try {
+      cachedPatient.diagnoses.push(...createPayload.diagnoses);
+      if (prescriptionsWithDateStrings) {
+        cachedPatient.prescriptions.push(...prescriptionsWithDateStrings);
+      }
+
+      // Update the database with the new diagnoses and prescriptions
+      await patient.updateOne(
+        { name: createPayload.name, age: createPayload.age, phone: createPayload.phone },
+        { $push: { diagnoses: { $each: createPayload.diagnoses }, prescriptions: { $each: prescriptionsWithDateStrings } } }
+      );
+
+      // Save the updated patient data back to Redis and in-memory cache
+      await cacheInRedis(patientKey, cachedPatient);
+      cacheInMemory(patientKey, cachedPatient);
+
+      return res.json({
+        msg: "Diagnosis and Prescriptions added to cache and updated in database",
+      });
+    } catch (error) {
+      console.error("Error updating cached patient in Redis:", error);
+      return res.status(500).json({
+        msg: "Error updating cached patient in Redis",
+        error: error.message,
+      });
+    }
+  }
+
+  // If patient is not in any cache, query the database
+  const existingPatient = await patient.findOne({
+    name: createPayload.name,
+    age: createPayload.age,
+    phone: createPayload.phone,
+  });
+
+  if (existingPatient) {
+    // Append new diagnoses and prescriptions
+    existingPatient.diagnoses.push(...createPayload.diagnoses);
+    if (prescriptionsWithDateStrings) {
+      existingPatient.prescriptions.push(...prescriptionsWithDateStrings);
+    }
+    await existingPatient.save();
+
+    // Cache patient in both memory and Redis
+    cacheInMemory(patientKey, existingPatient);
+    await cacheInRedis(patientKey, existingPatient);
+
+    return res.json({
+      msg: "Diagnosis and Prescriptions added",
+    });
+  } else {
+    const newPatientPayload = {
+      name: createPayload.name,
+      email: createPayload.email,
+      phone: createPayload.phone,
+      diagnoses: createPayload.diagnoses,
+      prescriptions: prescriptionsWithDateStrings,
+    };
+
+    // Conditionally add optional fields
+    if (createPayload.age !== undefined) {
+      newPatientPayload.age = createPayload.age;
+    }
+    if (createPayload.sex !== undefined) {
+      newPatientPayload.sex = createPayload.sex;
+    }
+
+    try {
+      const newPatient = await patient.create(newPatientPayload);
+
+      cacheInMemory(patientKey, newPatient);
+      await cacheInRedis(patientKey, newPatient);
+
+      return res.json({
+        msg: "New patient created successfully",
+      });
+    } catch (error) {
+      console.error("Error creating new patient:", error);
+      return res.status(500).json({
+        msg: "Error creating new patient",
+        error: error.message,
+      });
+    }
+  }
+});
+
+
+  // Route: POST /filter
+  app.post("/filter", async (req, res) => {
+    const { patientName, email, phoneNumber } = req.body;
+
+    // Check if at least one field is provided
+    if (!patientName && !email && !phoneNumber) {
+      return res.status(400).json({ message: "At least one field must be provided." });
+    }
+
+    // Build the query based on provided fields
+    const query = {};
+    if (patientName) query.name = patientName;
+    if (email) query.email = email;
+    if (phoneNumber) query.phone = phoneNumber;
+
+    try {
+      // Find patients with similar attributes
+      const patients = await patient.find(query);
+      return res.status(200).json(patients);
+    } catch (error) {
+      return res.status(500).json({ message: "Internal server error", error: error.message });
     }
   });
+
+
 
   // Start the server
   app.listen(3000, function () {
