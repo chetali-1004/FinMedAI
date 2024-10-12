@@ -300,7 +300,6 @@ async def handle_images(images: list[UploadFile] = File(...)):
 #     # Start ngrok
 #     public_url = ngrok.connect(5000)
 #     print("FastAPI is running on:", public_url)
-import uvicorn
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=5000)
