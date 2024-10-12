@@ -23,6 +23,7 @@ const Header = () => {
   const [email, setEmail] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [confidence , setConfidence ] = useState([]); 
+  const [uploadedFileURL, setUploadedFileURL] = useState([]);
 
   const handleFileChange = useCallback((e) => {
     const uploadedFiles = Array.from(e.target.files);
@@ -74,6 +75,7 @@ const Header = () => {
           const cloudinaryData = await cloudinaryResponse.json();
           uploadedFileURLs.push(cloudinaryData.secure_url); // Collect the Cloudinary URL
           console.log(uploadedFileURLs);
+          setUploadedFileURL(uploadedFileURLs);
         }
         // Cloudinary code ends
   
@@ -83,7 +85,7 @@ const Header = () => {
         });
   
         const response = await fetch(
-          "https://365c-14-142-131-190.ngrok-free.app/process_images",
+          "https://be9c-14-142-131-190.ngrok-free.app/process_images",
           {
             method: "POST",
             body: formData,
@@ -120,7 +122,6 @@ const Header = () => {
           console.log(provisionalDiagnosis);
   
           // Call the update function here
-          updateDiagnosis(provisionalDiagnosis, uploadedFileURLs);
         }
       } catch (error) {
         console.error("Error during file upload:", error);
@@ -133,7 +134,8 @@ const Header = () => {
   );
   
 
-  const updateDiagnosis = async (provisionalDiagnosis, uploadedFileURLs) => {
+  const updateDiagnosis = async (provisionalDiagnosis, uploadedFileURL) => {
+    console.log(uploadedFileURL);
     try {
       const response = await fetch("http://localhost:3000/update", {
         method: "POST",
@@ -145,7 +147,7 @@ const Header = () => {
           email: email,
           phone: phoneNumber,
           diagnoses: provisionalDiagnosis,
-          prescriptions: uploadedFileURLs.map((url) => ({
+          prescriptions: uploadedFileURL.map((url) => ({
             extractedDiagnosis: url,
           })),
         }),
@@ -157,6 +159,7 @@ const Header = () => {
 
       const responseData = await response.json();
       console.log(responseData);
+
     } catch (error) {
       console.error("Error during file upload:", error);
       setNotification("Failed to extract diagnosis. Please try again.");
@@ -332,7 +335,7 @@ const Header = () => {
 
           {jsonList.length > 0 && (
             <div className="mt-4 md:mt-6 bg-white bg-opacity-5 p-4 md:p-6 rounded-lg">
-              <JsonOutputDisplay jsonList={jsonList} />
+              <JsonOutputDisplay jsonList={jsonList} confidence={confidence} updateDiagnosis={updateDiagnosis} uploadedFileURL={uploadedFileURL} />
             </div>
           )}
         </div>
