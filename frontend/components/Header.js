@@ -22,6 +22,7 @@ const Header = () => {
   const [patientName, setPatientName] = useState("");
   const [email, setEmail] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
+  const [confidence , setConfidence ] = useState([]); 
 
   const handleFileChange = useCallback((e) => {
     const uploadedFiles = Array.from(e.target.files);
@@ -44,9 +45,9 @@ const Header = () => {
         setNotification("Please upload at least one file.");
         return;
       }
-
+  
       setLoading(true);
-
+  
       try {
         // Cloudinary code starts
         const uploadedFileURLs = [];
@@ -55,7 +56,7 @@ const Header = () => {
           formData.append("file", file);
           formData.append("upload_preset", "bcpgv8rb"); // Add your Cloudinary upload preset
           formData.append("cloud_name", "dhnpwlqef"); // Add your Cloudinary cloud name
-
+  
           const cloudinaryResponse = await fetch(
             "https://api.cloudinary.com/v1_1/dhnpwlqef/image/upload", // Replace YOUR_CLOUD_NAME
             {
@@ -63,56 +64,61 @@ const Header = () => {
               body: formData,
             }
           );
-
+  
           if (!cloudinaryResponse.ok) {
             throw new Error(
               `Cloudinary upload failed: ${cloudinaryResponse.statusText}`
             );
           }
-
+  
           const cloudinaryData = await cloudinaryResponse.json();
           uploadedFileURLs.push(cloudinaryData.secure_url); // Collect the Cloudinary URL
           console.log(uploadedFileURLs);
         }
         // Cloudinary code ends
-
+  
         const formData = new FormData();
         files.forEach((f) => {
           formData.append("images", f);
         });
-
+  
         const response = await fetch(
-          "https://e4d9-34-139-10-83.ngrok-free.app/process_images",
+          "https://365c-14-142-131-190.ngrok-free.app/process_images",
           {
             method: "POST",
             body: formData,
           }
         );
-
+  
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-
+  
         const responseData = await response.json();
         console.log(responseData);
-
+  
         if (responseData.length === 0) {
           setNotification("No diagnosis found");
         } else {
           const diagnoses = responseData.map((data) => ({
             fileName: data.file_name,
-            diagnosis: data["provisional diagnosis"],
+            diagnosis: data["provisional_diagnosis"],
+            confidence_score: data["confidence_score"],
           }));
+  
+          // Store the confidence scores in a state variable
+          const confidenceScores = responseData.map((data) => data["Confidence_score"]);
+          setConfidence(confidenceScores);  // Save confidence scores
+  
           setDiagnosis(diagnoses);
           setJsonList(responseData);
           setNotification("Diagnosis extracted successfully!");
-          console.log(responseData);
-
+  
           const provisionalDiagnosis = responseData.map(
             (data) => data["provisional_diagnosis"]
           );
           console.log(provisionalDiagnosis);
-
+  
           // Call the update function here
           updateDiagnosis(provisionalDiagnosis, uploadedFileURLs);
         }
@@ -125,6 +131,7 @@ const Header = () => {
     },
     [files]
   );
+  
 
   const updateDiagnosis = async (provisionalDiagnosis, uploadedFileURLs) => {
     try {
@@ -167,6 +174,10 @@ const Header = () => {
   //     console.log(user.id);
   //   }
   // }, [user]);
+  useEffect(() => {
+    console.log("this is confidence ", confidence);    // Log confidence scores
+  }, [confidence]);
+
 
   return (
     <div className="bg-gradient-to-r from-[#004A7C] to-[#112D4E] min-h-screen font-sans text-white flex flex-col gap-4 py-4">
