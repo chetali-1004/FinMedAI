@@ -57,7 +57,7 @@ const Navbar1: React.FC<Navbar1Props> = ({ show, setShow, data }) => {
               Contact Us
             </Link>
             <Link
-              href="/"
+              href="/filter"
               className="text-black hover:bg-gray-300 px-4 py-2 rounded transition-colors duration-200"
             >
               Filter
