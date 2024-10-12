@@ -8,7 +8,8 @@ const redis = require("redis");
 app.use(express.json());
 app.use(cors());
 
-() => {
+(() => {
+  // In-memory cache setup for frequent clicks
   const inMemoryCache = new Map();
   const IN_MEMORY_CACHE_DURATION = 60 * 1000; // 1 minute
 
@@ -19,6 +20,7 @@ app.use(cors());
   redisClient.connect();
   const REDIS_CACHE_DURATION = 300; // 5 minutes
 
+  // Function to cache data in memory
   function cacheInMemory(key, value) {
     inMemoryCache.set(key, value);
     setTimeout(() => {
@@ -26,6 +28,7 @@ app.use(cors());
     }, IN_MEMORY_CACHE_DURATION);
   }
 
+  // Function to get data from in-memory cache
   function getFromInMemoryCache(key) {
     return inMemoryCache.get(key);
   }
@@ -43,6 +46,8 @@ app.use(cors());
     return cachedValue ? JSON.parse(cachedValue) : null;
   }
 
+  // Route: POST /update
+  // Route: POST /update
   app.post("/update", async function (req, res) {
     console.log("Received a post request to /update");
     const createPayload = req.body;
@@ -196,4 +201,9 @@ app.use(cors());
       }
     }
   });
-};
+
+  // Start the server
+  app.listen(3000, function () {
+    console.log("Server is running on port 3000");
+  });
+})();
