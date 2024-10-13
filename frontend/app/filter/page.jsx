@@ -26,7 +26,6 @@ const Filtering = () => {
         body: JSON.stringify({ patientName, email, phoneNumber }),
       });
       const data = await response.json();
-      console.log(data);
       if (data.length === 0) {
         setNoPatientFound(true);
       } else {
@@ -59,20 +58,20 @@ const Filtering = () => {
   };
 
   function SearchResults({ results, setSelectedPatient }) {
-    const handlePatientClick = async (patient) => {
+    const handlePatientClick = (patient) => {
       window.location.href = `/claim?patientId=${patient._id}`;
     };
 
     return (
-      <div>
+      <div className="mt-6 space-y-3">
         {results.map((patient) => (
           <div
             key={patient.id}
-            className="cursor-pointer p-2 border-b border-gray-300 hover:bg-gray-200 text-black"
+            className="cursor-pointer p-3 bg-white shadow-lg rounded-md hover:shadow-xl transition-shadow duration-300 ease-in-out text-black"
             onClick={() => handlePatientClick(patient)}
           >
-            {patient.name}
-            {patient.phone} {/* Display other relevant info if needed */}
+            <h3 className="text-lg font-semibold">{patient.name}</h3>
+            <p className="text-sm text-gray-500">Phone: {patient.phone}</p>
           </div>
         ))}
       </div>
@@ -80,21 +79,24 @@ const Filtering = () => {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#003366] pt-10">
+    <div className="flex flex-col min-h-screen bg-gradient-to-r from-[#004A7C] to-[#112D4E] text-white pt-6">
       <Navbar1 show={show} setShow={setShow} />
       <div className="flex flex-grow justify-center">
-        <div className="w-3/4 mt-10">
-          <h1 className="text-4xl font-bold text-[#E8F1F5] mb-8 text-center">
+        <div className="w-full max-w-4xl mt-16">
+          <h1 className="text-4xl font-bold mb-8 text-center animate__animated animate__fadeInDown">
             Patient Management System
           </h1>
-          <div className="w-4/6 mx-auto bg-[#E8F1F5] p-6 rounded-lg shadow-lg space-y-4">
-            {/* Search Input */}
-            <div className="space-y-4">
+          <div className="w-full bg-white p-8 rounded-lg shadow-lg text-black space-y-8 animate__animated animate__fadeInUp">
+            <p className="text-left text-sm text-gray-600 ">
+              *Enter at least 1 value
+            </p>
+            {/* Search Inputs */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Patient Name */}
               <div>
                 <label
                   htmlFor="patientName"
-                  className="text-black font-semibold"
+                  className="text-lg font-semibold text-gray-700"
                 >
                   Patient Name
                 </label>
@@ -104,12 +106,16 @@ const Filtering = () => {
                   value={patientName}
                   onChange={(e) => setPatientName(e.target.value)}
                   placeholder="Enter patient name"
-                  className="w-full p-2 border border-gray-300 rounded-md text-black"
+                  className="w-full p-3 mt-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800"
                 />
               </div>
 
+              {/* Email */}
               <div>
-                <label htmlFor="email" className="text-black font-semibold">
+                <label
+                  htmlFor="email"
+                  className="text-lg font-semibold text-gray-700"
+                >
                   Email
                 </label>
                 <input
@@ -118,14 +124,15 @@ const Filtering = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter email"
-                  className="w-full p-2 border border-gray-300 rounded-md text-black"
+                  className="w-full p-3 mt-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800"
                 />
               </div>
 
+              {/* Phone Number */}
               <div>
                 <label
                   htmlFor="phoneNumber"
-                  className="text-black font-semibold"
+                  className="text-lg font-semibold text-gray-700"
                 >
                   Phone Number
                 </label>
@@ -135,21 +142,23 @@ const Filtering = () => {
                   value={phoneNumber}
                   onChange={(e) => setPhoneNumber(e.target.value)}
                   placeholder="Enter phone number"
-                  className="w-full p-2 border border-gray-300 rounded-md text-black"
+                  className="w-full p-3 mt-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800"
                 />
               </div>
-
+            </div>
+            {/* bg-gradient-to-r from-[#007bff] to-[#004a7c] */}
+            <div className="flex justify-center mt-6">
               <button
                 onClick={handleSearch}
-                className="w-full px-4 py-2 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition duration-300"
+                className="w-full md:w-auto px-8 py-3 bg-[#007bff]  text-white font-semibold rounded-lg hover:scale-105 hover:shadow-lg transition-transform duration-300 ease-in-out"
               >
-                Search
+                🔍 Search
               </button>
             </div>
 
-            {results.length > 0 ? (
-              <div className="mt-4">
-                <h2 className="text-xl font-semibold text-gray-700">
+            {results.length > 0 && (
+              <div>
+                <h2 className="text-xl font-semibold text-gray-800 mt-8">
                   Search Results
                 </h2>
                 <SearchResults
@@ -157,29 +166,35 @@ const Filtering = () => {
                   setSelectedPatient={setSelectedPatient}
                 />
               </div>
-            ) : (
-              <div>
-                <p className="text-black">No record found</p>
-              </div>
             )}
 
+            {noPatientFound && (
+              <p className="text-red-500 text-center mt-4">
+                No records found. Please try again with different criteria.
+              </p>
+            )}
+
+            {/* Selected Patient */}
             {selectedPatient && (
-              <div className="mt-8 p-4 bg-green-50 rounded-lg shadow-md w-full">
+              <div className="mt-10 p-6 bg-gray-100 rounded-lg shadow-lg animate__animated animate__fadeInUp">
                 <h2 className="text-xl font-semibold text-gray-800">
                   {selectedPatient?.name}'s Past Prescriptions
                 </h2>
-                <ul className="bg-gray-100 p-4 rounded-md mt-2 space-y-2">
+                <ul className="mt-4 space-y-3">
                   {selectedPatient?.prescriptions.map((prescription, index) => (
-                    <li key={index} className="border-b border-gray-300 pb-2">
-                      <p className="font-medium">{prescription.details}</p>{" "}
-                      {/* Display only diagnosis names */}
+                    <li
+                      key={index}
+                      className="p-4 bg-white rounded-lg shadow-md border border-gray-200"
+                    >
+                      <p>{prescription.details}</p>
                     </li>
                   ))}
                 </ul>
-                <div className="flex justify-center mt-10">
+
+                <div className="flex justify-center mt-8">
                   <button
                     onClick={handleGenerateReport}
-                    className="px-4 py-2 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition duration-300"
+                    className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-all duration-300 ease-in-out"
                   >
                     Generate Report
                   </button>
