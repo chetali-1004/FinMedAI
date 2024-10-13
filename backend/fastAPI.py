@@ -14,6 +14,8 @@ from threading import Thread
 from dotenv import load_dotenv
 from pyngrok import ngrok, conf
 import getpass
+from fuzzywuzzy import process, fuzz
+
 
 load_dotenv()
 
@@ -118,6 +120,7 @@ def gpt_output(image_file):
                             "text": '''
                             Extract the provisional diagnosis from the image provided exactly as it is.
                             Use your medical knowledge to refine and interpret the diagnosis, ensuring it aligns with standard medical terminology.
+                            Do not include any medical test as a diagnosis.
                             When providing the confidence score (between 0 to 1), base it on the following factors:
                             1. How closely the extracted diagnosis matches standard medical terms (e.g., ICD-10 codes or recognized variations).
                             2. Whether the terms are commonly used or have clear medical relevance.
@@ -126,7 +129,9 @@ def gpt_output(image_file):
                               Provisional Diagnosis: {diagnosis_value}
                               Confidence Score: {confidence_value}
                             The first line should contain the Provisional diagnosis, and the confidence score should be on the second line.
-                                '''
+
+                            *Even if the diagnosis are written in multiple lines in the image give the output in one line as diagnosis_value.*
+                            ''' 
                         },
                         {
                             "type": "image_url",
@@ -137,7 +142,7 @@ def gpt_output(image_file):
                     ]
                 }
             ],
-            "max_tokens": 300
+            "max_tokens": 500
         }
 
         # Make the API call
@@ -167,27 +172,49 @@ def llm_output(diagnosis_value, confidence_value):
 
     # Step 2: Prepare the prompt for Groq LLM API
 
+    # prompt = (
+    # "Given the input Provisional Diagnosis and Confidence Score from text extraction model, apply medical context to provide the corrected diagnosis. "
+    # "DO NOT expand or change short forms unless they are incorrect. Maintain them as they are in the output. "
+    # "If the confidence score is high (>=96%), make minimal changes. If the confidence score is low (<96%), refine the diagnosis carefully. but still keep short forms as they are unless they are clearly wrong."
+
+    # "Input Format (For your reference only):"
+    # f"Provisional Diagnosis: {diagnosis_value} "
+    # f"Confidence Score: {confidence_value} in percentage "
+
+    # "Output should be in the EXACT specified format. Do NOT output anything else. "
+    # "When providing the confidence score (between 0 to 1), base it on the following factors:"
+    #                                     "1. How closely the extracted diagnosis matches standard medical terms (e.g., ICD-10 codes or recognized variations)."
+    #                                     "2. Whether the terms are commonly used or have clear medical relevance."
+
+    #     "Output the result as a valid JSON object with the following structure: "
+    #     "{"
+    #     '"Extracted_Diagnosis": "<corrected_diagnosis>", '
+    #     '"Confidence_Score": <your_own_confidence_score>'
+    #     "}. The Confidence Score must be a float between 0 and 1, and all responses must adhere to JSON syntax. "
+
+    # )
     prompt = (
-    "Given the input Provisional Diagnosis and Confidence Score from text extraction model, apply medical context to provide the corrected diagnosis. "
-    "DO NOT expand or change short forms unless they are incorrect. Maintain them as they are in the output. "
-    "If the confidence score is high (>=96%), make minimal changes. If the confidence score is low (<96%), refine the diagnosis carefully. but still keep short forms as they are unless they are clearly wrong."
+    f"""Given the input Provisional Diagnosis and Confidence Score from text extraction model, apply medical context to provide the corrected diagnosis. 
+        Do not include any medical tests as a diagnosis.
+       - If the Confidence Score is high (>=0.95), make very minimal changes. In this case you can return a high confidence.(>0.95)
+       - If the Confidence Score is low (<0.95), correct the diagnosis accordingly. Return a low confidence (<0.95) when not sure.
+       Expand the commonly used medical abbreviations carefully. But dont change diagnoses meaning overall
 
-    "Input Format (For your reference only):"
-    f"Provisional Diagnosis: {diagnosis_value} "
-    f"Confidence Score: {confidence_value} in percentage "
+       Different diagnosis should be separated by , compulsorily.
 
-    "Output should be in the EXACT specified format. Do NOT output anything else. "
-    "When providing the confidence score (between 0 to 1), base it on the following factors:"
-                                        "1. How closely the extracted diagnosis matches standard medical terms (e.g., ICD-10 codes or recognized variations)."
-                                        "2. Whether the terms are commonly used or have clear medical relevance."
+        *Respond only with a JSON object in this format*:
 
-        "Output the result as a valid JSON object with the following structure: "
-        "{"
-        '"Extracted_Diagnosis": "<corrected_diagnosis>", '
-        '"Confidence_Score": <your_own_confidence_score>'
-        "}. The Confidence Score must be a float between 0 and 1, and all responses must adhere to JSON syntax. "
+        {{
+            "Extracted_Diagnosis": "<corrected_diagnosis>",
+            "Confidence_Score": <your_own_confidence_score>
+        }}
 
-    )
+        Input for your reference:
+        Provisional Diagnosis: {diagnosis_value}
+        Confidence Score: {confidence_value} (between 0 and 1)
+
+        DO NOT output any additional information or explanation.
+""")
 
     # Step 3: Set up the Groq client and call the model
     client = Groq(api_key=api_key_llm)  # Pass API key here
@@ -201,7 +228,7 @@ def llm_output(diagnosis_value, confidence_value):
             }
         ],
         temperature=1,  # Adjust temperature for creativity/variance
-        max_tokens=1024,  # Limit the maximum tokens for response
+        max_tokens=512,  # Limit the maximum tokens for response
         top_p=1,  # Sampling from top-p values (alternative to top-k)
         stream=True,  # Enable streaming for faster output
         stop=None,  # No stop sequence specified, change if necessary
@@ -220,16 +247,116 @@ def llm_output(diagnosis_value, confidence_value):
     except json.JSONDecodeError:
         # Handle the case where the LLM did not return valid JSON
         return f"Error: Invalid JSON output - {corrected_text}"
+
+
+# Define a threshold for the confidence score (e.g., 80 or higher)
+confidence_threshold = 80
+
+# Step 1: Load the CSV of ICD-10 codes
+icd_data = pd.read_csv("ICD_with_3_and_4.csv")
+icd_dict = dict(zip(icd_data['Common_Code'], icd_data['Diagnosis']))
+
+# Get the list of diagnoses for fuzzy matching
+icd_descriptions = list(icd_dict.values())
+def map_icd10_codes(lst_of_diagnosis):
+
+  # Dictionary to store the results
+  diagnosis_to_icd = {}
+
+  # Iterate over each diagnosis in the list
+  for diagnosis in lst_of_diagnosis:
+      # Use fuzzy matching to find all matches
+      all_matches = process.extract(diagnosis, icd_descriptions)
+      
+      # Filter out matches below the confidence threshold
+      filtered_matches = [match for match in all_matches if match[1] >= confidence_threshold]
+      # match_dict = {diagnosis: filtered_matches}
+      # print(match_dict)
+      
+      # If there are no matches that meet the threshold, mark it as low confidence
+      if not filtered_matches:
+          diagnosis_to_icd[diagnosis] = "No matching code found (low confidence)"
+      else:
+          # Sort the filtered matches based on score in descending order
+          filtered_matches = sorted(filtered_matches, key=lambda x: x[1], reverse=True)
+          
+          # Check if the top match has a higher score than the rest
+          top_score = filtered_matches[0][1]
+          if len(filtered_matches) == 1 or all(m[1] < top_score for m in filtered_matches[1:]):
+              # If the top score is clearly higher than the others, choose it
+              best_match_description, best_score = filtered_matches[0]
+          else:
+              # If multiple matches have the same or similar scores, choose the middle one
+              middle_index = len(filtered_matches) // 2
+              best_match_description, best_score = filtered_matches[middle_index]
+          
+          # Find the corresponding ICD code for the best match
+          matching_code = [code for code, diag in icd_dict.items() if diag == best_match_description]
+          
+          # If a matching code is found, add it to the dictionary
+          if matching_code:
+              diagnosis_to_icd[diagnosis] = matching_code[0]
+          else:
+              diagnosis_to_icd[diagnosis] = "No matching code found"
+
+  # Print the resulting dictionary
+  # print(diagnosis_to_icd)
+  return diagnosis_to_icd
     
 def process_image(image_file):
-  gpt_output_list = gpt_output(image_file)
+    try:
+        # Attempt to process the image
+        extracted_output_list = gpt_output(image_file)
+        
+        # Extract diagnosis and confidence values safely
+        if len(extracted_output_list) == 2 and ':' in extracted_output_list[0] and ':' in extracted_output_list[1]:
+            diagnosis_value = extracted_output_list[0].split(':')[1].strip()
+            confidence_value = extracted_output_list[1].split(':')[1].strip()
+        else:
+            raise ValueError("Invalid Output Format")  # Trigger error handling for invalid format
 
-  diagnosis_value = gpt_output_list[0].split(':')[1]
-  confidence_value = gpt_output_list[1].split(':')[1]
+        # Attempt to correct the output using the LLM
+        llm_result = llm_output(diagnosis_value, confidence_value)
 
-  final_diagnosis = llm_output(diagnosis_value, confidence_value)
+        # Check if the LLM output is in the expected format
 
-  return final_diagnosis
+        if isinstance(llm_result, dict) and 'Extracted_Diagnosis' in llm_result and 'Confidence_Score' in llm_result:
+            final_diagnosis = llm_result['Extracted_Diagnosis']
+            llm_confidence = llm_result['Confidence_Score']
+        print(final_diagnosis)
+
+        # else:
+        #     raise ValueError("Invalid LLM output format")  # Trigger error handling for invalid format
+
+        lst_of_diagnosis = final_diagnosis.split(',')
+
+        diagnosis_to_icd10_mapping = map_icd10_codes(lst_of_diagnosis)
+
+        # Prepare lists for diagnosis values and corresponding ICD-10 codes
+        diagnosis_list = list(diagnosis_to_icd10_mapping.keys())
+        icd10_list = list(diagnosis_to_icd10_mapping.values())
+        
+        # Return the results as a JSON object
+        return {
+            "diagnosis_values": diagnosis_list,
+            "icd10_codes": icd10_list,
+            "confidence": llm_confidence
+        }
+    
+    except Exception as e:
+        print(f"Error processing file {image_file}: {str(e)}")
+        return {
+            "diagnosis_values": "Please Try Again",
+            "icd10_codes": "Please Try Again",
+            "confidence": "Please Try Again"
+        }
+
+#   diagnosis_value = gpt_output_list[0].split(':')[1]
+#   confidence_value = gpt_output_list[1].split(':')[1]
+
+#   final_diagnosis = llm_output(diagnosis_value, confidence_value)
+
+#   return final_diagnosis
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -270,13 +397,15 @@ async def handle_images(images: list[UploadFile] = File(...)):
             result_json = process_image(image_file.file)
             # diagnosis_value = result_json[0].split(':')[1]
             # confidence_value = result_json[1].split(':')[1]
-            diagnosis_value = result_json['Extracted_Diagnosis']
-            confidence_value = result_json['Confidence_Score']
+            diagnosis_value = result_json['diagnosis_values']
+            icd10_value = result_json['icd10_codes']
+            confidence_value = result_json['confidence']
             print(diagnosis_value)
+            print(icd10_value)
             print(confidence_value)
 
             # Append result to the list
-            results.append({"file_name": image_file.filename, "provisional_diagnosis": diagnosis_value, "Confidence_score": confidence_value})
+            results.append({"file_name": image_file.filename, "provisional_diagnosis": diagnosis_value, "icd10_code": icd10_value, "Confidence_score": confidence_value})
 
         # Return JSON response
         return JSONResponse(content=results)

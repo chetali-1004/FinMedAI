@@ -6,3 +6,4 @@ pyngrok
 python-multipart
 requests
 python-dotenv
+fuzzywuzzy
