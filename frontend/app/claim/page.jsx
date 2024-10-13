@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 const ClaimPage = () => {
   const [patientId, setPatientId] = useState(null);
+  const [patientName, setPatientName] = useState(""); // Add a state variable for the patient's name
   const [diagnoses, setDiagnoses] = useState([]);
   const [prescriptions, setPrescriptions] = useState([]);
   const [show, setShow] = useState(true);
@@ -41,6 +42,7 @@ const ClaimPage = () => {
           const fetchedPrescriptions = data.patient.prescriptions || [];
           const patientDiagnoses = data.patient ? data.patient.diagnoses : [];
 
+          setPatientName(data.patient.name); // Set the patient's name here
           setDiagnoses(patientDiagnoses);
           setPrescriptions(fetchedPrescriptions);
         } catch (error) {
@@ -63,7 +65,8 @@ const ClaimPage = () => {
         <div className="container w-3/4 space-y-8 mx-auto">
           <div>
             <h1 className="text-3xl font-extrabold text-center text-[#E8F1F5] pt-5">
-              Claim Page for Patient
+              Past Diagnoses for{" "}
+              {patientName ? toTitleCase(patientName) : "Patient"}
             </h1>
           </div>
 
