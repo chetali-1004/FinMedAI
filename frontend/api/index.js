@@ -230,25 +230,82 @@ app.use(cors());
   });
 
   // Route: POST /filter
+  // app.post("/filter", async (req, res) => {
+  //   const { patientName, email, phoneNumber } = req.body;
+
+  //   // Check if at least one field is provided
+  //   if (!patientName && !email && !phoneNumber) {
+  //     return res
+  //       .status(400)
+  //       .json({ message: "At least one field must be provided." });
+  //   }
+
+  //   // Build the query based on provided fields
+  //   const query = {};
+  //   if (patientName) query.name = { $regex: new RegExp(patientName, "i") };
+  //   if (email) query.email = { $regex: new RegExp(email, "i") };
+  //   if (phoneNumber) query.phone = { $regex: new RegExp(phoneNumber, "i") };
+
+  //   console.log("Constructed Query: ", query);
+
+  //   try {
+  //     // Find patients with similar attributes
+  //     const patients = await patient.find(query);
+
+  //     console.log("Found Patients: ", patients); // Check the output
+  //     return res.status(200).json(patients);
+  //   } catch (error) {
+  //     console.error("Error during query:", error.message);
+  //     return res
+  //       .status(500)
+  //       .json({ message: "Internal server error", error: error.message });
+  //   }
+  // });
+
   app.post("/filter", async (req, res) => {
     const { patientName, email, phoneNumber } = req.body;
 
-    // Check if at least one field is provided
+    // Ensure at least one field (either patientName or email) is provided
     if (!patientName && !email && !phoneNumber) {
-      return res
-        .status(400)
-        .json({ message: "At least one field must be provided." });
+      return res.status(400).json({
+        message: "At least one search field (name or email) is required.",
+      });
     }
 
-    // Build the query based on provided fields
-    const query = {};
-    if (patientName) query.name = patientName;
-    if (email) query.email = email;
-    if (phoneNumber) query.phone = phoneNumber;
-
     try {
-      // Find patients with similar attributes
+      // Build the query using $or to match either name or email
+      const query = {
+        $or: [],
+      };
+
+      // Add partial match for name if provided
+      if (patientName) {
+        query.$or.push({
+          name: { $regex: new RegExp(patientName, "i") }, // Case-insensitive partial match for name
+        });
+      }
+
+      // Add partial match for email if provided
+      if (email) {
+        query.$or.push({
+          email: { $regex: new RegExp(email, "i") }, // Case-insensitive partial match for email
+        });
+      }
+
+      if (phoneNumber) {
+        query.$or.push({
+          phone: phoneNumber, // Case-insensitive partial match for phone
+        });
+      }
+
+      // Execute the search query
       const patients = await patient.find(query);
+      console.log("Found Patients: ", patients);
+
+      if (patients.length === 0) {
+        return res.status(404).json({ message: "No records found." });
+      }
+
       return res.status(200).json(patients);
     } catch (error) {
       return res
