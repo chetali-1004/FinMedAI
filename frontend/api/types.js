@@ -14,6 +14,8 @@ const mainreq = zod.object({
       extractedDiagnosis: zod.string(),
     })
   ),
+  icd: zod.array(zod.string()),
+  confidence_score: zod.number(),
 });
 
 module.exports = {

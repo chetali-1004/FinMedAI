@@ -10,6 +10,7 @@ import Notification from "./Notification";
 import JsonOutputDisplay from "./JsonOutput";
 import Features from "./Features";
 import { useUser } from "@clerk/nextjs";
+import { type } from "os";
 
 const Header = () => {
   const [show, setShow] = useState(true);
@@ -85,7 +86,7 @@ const Header = () => {
         });
 
         const response = await fetch(
-          "https://bc5c-14-142-131-190.ngrok-free.app/process_images",
+          "https://8d7f-125-16-34-110.ngrok-free.app/process_images",
           {
             method: "POST",
             body: formData,
@@ -138,7 +139,11 @@ const Header = () => {
   const updateDiagnosis = async (provisionalDiagnosis, prop1) => {
     console.log(prop1);
     const urls = prop1.split(",");
-    const newDiagnosis = provisionalDiagnosis.split(",");
+    console.log(provisionalDiagnosis);
+    // const newDiagnosis = provisionalDiagnosis.split(",");
+    const newDiagnosis = provisionalDiagnosis.map(diagnosis => diagnosis.split(",").join(","));
+
+    console.log(typeof provisionalDiagnosis);
     try {
       const response = await fetch("http://20.244.90.70:3000/update", {
         method: "POST",

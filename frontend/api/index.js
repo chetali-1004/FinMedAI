@@ -200,6 +200,8 @@ app.use(cors());
         phone: createPayload.phone,
         diagnoses: createPayload.diagnoses,
         prescriptions: prescriptionsWithDateStrings,
+        icd: createPayload.icd,
+        confidence_score: createPayload.confidence_score,
       };
 
       // Conditionally add optional fields
