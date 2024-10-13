@@ -22,7 +22,7 @@ const Header = () => {
   const [patientName, setPatientName] = useState("");
   const [email, setEmail] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
-  const [confidence , setConfidence ] = useState([]); 
+  const [confidence, setConfidence] = useState([]);
   const [uploadedFileURL, setUploadedFileURL] = useState([]);
 
   const handleFileChange = useCallback((e) => {
@@ -46,9 +46,9 @@ const Header = () => {
         setNotification("Please upload at least one file.");
         return;
       }
-  
+
       setLoading(true);
-  
+
       try {
         // Cloudinary code starts
         const uploadedFileURLs = [];
@@ -57,7 +57,7 @@ const Header = () => {
           formData.append("file", file);
           formData.append("upload_preset", "bcpgv8rb"); // Add your Cloudinary upload preset
           formData.append("cloud_name", "dhnpwlqef"); // Add your Cloudinary cloud name
-  
+
           const cloudinaryResponse = await fetch(
             "https://api.cloudinary.com/v1_1/dhnpwlqef/image/upload", // Replace YOUR_CLOUD_NAME
             {
@@ -65,25 +65,25 @@ const Header = () => {
               body: formData,
             }
           );
-  
+
           if (!cloudinaryResponse.ok) {
             throw new Error(
               `Cloudinary upload failed: ${cloudinaryResponse.statusText}`
             );
           }
-  
+
           const cloudinaryData = await cloudinaryResponse.json();
           uploadedFileURLs.push(cloudinaryData.secure_url); // Collect the Cloudinary URL
           console.log(uploadedFileURLs);
           setUploadedFileURL(uploadedFileURLs);
         }
         // Cloudinary code ends
-  
+
         const formData = new FormData();
         files.forEach((f) => {
           formData.append("images", f);
         });
-  
+
         const response = await fetch(
           "https://bc5c-14-142-131-190.ngrok-free.app/process_images",
           {
@@ -91,14 +91,14 @@ const Header = () => {
             body: formData,
           }
         );
-  
+
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-  
+
         const responseData = await response.json();
         console.log(responseData);
-  
+
         if (responseData.length === 0) {
           setNotification("No diagnosis found");
         } else {
@@ -107,20 +107,22 @@ const Header = () => {
             diagnosis: data["provisional_diagnosis"],
             confidence_score: data["confidence_score"],
           }));
-  
+
           // Store the confidence scores in a state variable
-          const confidenceScores = responseData.map((data) => data["Confidence_score"]);
-          setConfidence(confidenceScores);  // Save confidence scores
-  
+          const confidenceScores = responseData.map(
+            (data) => data["Confidence_score"]
+          );
+          setConfidence(confidenceScores); // Save confidence scores
+
           setDiagnosis(diagnoses);
           setJsonList(responseData);
           setNotification("Diagnosis extracted successfully!");
-  
+
           const provisionalDiagnosis = responseData.map(
             (data) => data["provisional_diagnosis"]
           );
           console.log(provisionalDiagnosis);
-  
+
           // Call the update function here
         }
       } catch (error) {
@@ -132,12 +134,11 @@ const Header = () => {
     },
     [files]
   );
-  
 
   const updateDiagnosis = async (provisionalDiagnosis, prop1) => {
     console.log(prop1);
     const urls = prop1.split(",");
-    const newDiagnosis = provisionalDiagnosis.split(","); 
+    const newDiagnosis = provisionalDiagnosis.split(",");
     try {
       const response = await fetch("http://localhost:3000/update", {
         method: "POST",
@@ -161,7 +162,6 @@ const Header = () => {
 
       const responseData = await response.json();
       console.log(responseData);
-
     } catch (error) {
       console.error("Error during file upload:", error);
       setNotification("Failed to extract diagnosis. Please try again.");
@@ -180,9 +180,8 @@ const Header = () => {
   //   }
   // }, [user]);
   useEffect(() => {
-    console.log("this is confidence ", confidence);    // Log confidence scores
+    console.log("this is confidence ", confidence); // Log confidence scores
   }, [confidence]);
-
 
   return (
     <div className="bg-gradient-to-r from-[#004A7C] to-[#112D4E] min-h-screen font-sans text-white flex flex-col gap-4 py-4">
@@ -195,7 +194,10 @@ const Header = () => {
           Revolutionizing medical diagnosis with cutting-edge AI technology
         </p>
 
-        <div className="bg-[#dce9ef] rounded-xl p-6 md:p-8 shadow-2xl w-full md:w-4/5 lg:w-3/4 mx-auto">
+        <div className="bg-[#dce9ef] rounded-xl p-6 md:px-8 md:py-6 shadow-2xl w-full md:w-4/5 lg:w-3/4 mx-auto">
+          <p className="text-right text-red-500 text-sm py-0 font-semibold">
+            * fields are mandatory
+          </p>
           <form onSubmit={handleExtract} className="space-y-4 md:space-y-6">
             <div className="flex flex-col items-center space-y-4">
               <label htmlFor="file-upload" className="w-full cursor-pointer">
@@ -203,12 +205,16 @@ const Header = () => {
                 <div className="space-y-4">
                   {/* Patient Name */}
                   <div>
-                    <label
-                      htmlFor="patientName"
-                      className="text-black font-semibold"
-                    >
-                      Patient Name
-                    </label>
+                    <div className="flex flex-row">
+                      <label
+                        htmlFor="patientName"
+                        className="text-black font-semibold"
+                      >
+                        Patient Name
+                      </label>
+                      <p className=" text-red-500 font-bold">*</p>
+                    </div>
+
                     <input
                       type="text"
                       id="patientName"
@@ -220,9 +226,16 @@ const Header = () => {
                   </div>
 
                   <div>
-                    <label htmlFor="email" className="text-black font-semibold">
-                      Email
-                    </label>
+                    <div className="flex flex-row">
+                      <label
+                        htmlFor="email"
+                        className="text-black font-semibold"
+                      >
+                        Email
+                      </label>
+                      <p className=" text-red-500 font-bold">*</p>
+                    </div>
+
                     <input
                       type="text"
                       id="email"
@@ -234,12 +247,16 @@ const Header = () => {
                   </div>
 
                   <div>
-                    <label
-                      htmlFor="phoneNumber"
-                      className="text-black font-semibold"
-                    >
-                      Phone Number
-                    </label>
+                    <div className="flex flex-row">
+                      <label
+                        htmlFor="phoneNumber"
+                        className="text-black font-semibold"
+                      >
+                        Phone Number
+                      </label>
+                      <p className=" text-red-500 font-bold">*</p>
+                    </div>
+
                     <input
                       type="text"
                       id="phoneNumber"
@@ -337,7 +354,12 @@ const Header = () => {
 
           {jsonList.length > 0 && (
             <div className="mt-4 md:mt-6 bg-white bg-opacity-5 p-4 md:p-6 rounded-lg">
-              <JsonOutputDisplay jsonList={jsonList} confidence={confidence} updateDiagnosis={updateDiagnosis} uploadedFileURL={uploadedFileURL} />
+              <JsonOutputDisplay
+                jsonList={jsonList}
+                confidence={confidence}
+                updateDiagnosis={updateDiagnosis}
+                uploadedFileURL={uploadedFileURL}
+              />
             </div>
           )}
         </div>
