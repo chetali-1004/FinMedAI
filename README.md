@@ -15,5 +15,8 @@ change it to file from text from the dropdown
 
 in the value field, upload images and hit send.
 
-deployed link:
+Product deployed link:
 [https://vercel.live/link/finmedai-git-master-vedant-gholaps-projects.vercel.app?via=deployment-domains-list&p=1](https://vercel.live/link/finmedai-git-master-vedant-gholaps-projects.vercel.app?via=deployment-domains-list&p=1)
+
+Database API Deployed link : 
+[http://20.244.90.70:3000/](http://20.244.90.70:3000/)
