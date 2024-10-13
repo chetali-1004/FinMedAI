@@ -1,8 +1,8 @@
 "use client";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import jsPDF from "jspdf";
 import Navbar1 from "@/components/Navbar1";
-import { useNavigate } from "react-router-dom";
+import Notification from "@/components/Notification";
 
 const Filtering = () => {
   const [show, setShow] = useState(true);
@@ -12,15 +12,17 @@ const Filtering = () => {
   const [results, setResults] = useState([]);
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [noPatientFound, setNoPatientFound] = useState(false);
+  const [notification, setNotification] = useState("");
 
   const handleSearch = async () => {
     if (!patientName && !email && !phoneNumber) {
-      alert("Please enter at least one search criterion.");
+      setNotification("Please enter at least 1 field");
+      return;
       return;
     }
 
     try {
-      const response = await fetch(`http://localhost:3000/filter`, {
+      const response = await fetch(`http://20.244.90.70:3000/filter`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ patientName, email, phoneNumber }),
@@ -77,6 +79,10 @@ const Filtering = () => {
       </div>
     );
   }
+
+  const handleCloseNotification = useCallback(() => {
+    setNotification("");
+  }, []);
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-r from-[#004A7C] to-[#112D4E] text-white pt-6">
@@ -204,6 +210,12 @@ const Filtering = () => {
           </div>
         </div>
       </div>
+      {notification && (
+        <Notification
+          message={notification}
+          onClose={handleCloseNotification}
+        />
+      )}
     </div>
   );
 };

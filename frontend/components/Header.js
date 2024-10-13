@@ -140,7 +140,7 @@ const Header = () => {
     const urls = prop1.split(",");
     const newDiagnosis = provisionalDiagnosis.split(",");
     try {
-      const response = await fetch("http://localhost:3000/update", {
+      const response = await fetch("http://20.244.90.70:3000/update", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

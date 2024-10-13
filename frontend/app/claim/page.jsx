@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 
 const ClaimPage = () => {
   const [patientId, setPatientId] = useState(null);
-  const [patientName, setPatientName] = useState(""); // Add a state variable for the patient's name
+  const [patientName, setPatientName] = useState("");
   const [diagnoses, setDiagnoses] = useState([]);
   const [prescriptions, setPrescriptions] = useState([]);
   const [show, setShow] = useState(true);
@@ -29,7 +29,7 @@ const ClaimPage = () => {
     const fetchPatientData = async () => {
       if (patientId) {
         try {
-          const response = await fetch("http://localhost:3000/patient", {
+          const response = await fetch("http://20.244.90.70:3000/patient", {
             method: "GET",
             headers: {
               "Content-Type": "application/json",
@@ -95,9 +95,24 @@ const ClaimPage = () => {
                     )}
 
                     {diagnoses[index] ? (
-                      <p className="text-gray-700 mt-2">
-                        Diagnosis: {toTitleCase(diagnoses[index])}
-                      </p>
+                      <div>
+                        <div>
+                          <p className="text-gray-700 mt-2 font-bold">
+                            Diagnosis:
+                          </p>
+                          <p className="text-gray-700">
+                            {toTitleCase(diagnoses[index])}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-gray-700 mt-2 font-bold">
+                            ICD-10 Code:
+                          </p>
+                          <p className="text-gray-700">
+                            {toTitleCase(diagnoses[index])}
+                          </p>
+                        </div>
+                      </div>
                     ) : (
                       <p className="text-gray-600">No diagnosis available</p>
                     )}
