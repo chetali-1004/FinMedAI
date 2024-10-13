@@ -139,9 +139,7 @@ const Header = () => {
   const updateDiagnosis = async (provisionalDiagnosis, prop1) => {
     console.log(prop1);
     const urls = prop1.split(",");
-    console.log(provisionalDiagnosis);
-    // const newDiagnosis = provisionalDiagnosis.split(",");
-    const newDiagnosis = provisionalDiagnosis.map(diagnosis => diagnosis.split(",").join(","));
+    const newDiagnosis = provisionalDiagnosis.split(",");
 
     console.log(typeof provisionalDiagnosis);
     try {
