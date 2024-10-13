@@ -38,7 +38,7 @@ const JsonOutputDisplay = ({ jsonList, confidence, updateDiagnosis , uploadedFil
   return (
     <div className="json-output-display">
       {jsonList.map((entry, index) => (
-        <div key={index} className="mb-4 p-4 border rounded-lg bg-gray-50">
+        <div key={index} className="text-black mb-4 p-4 border rounded-lg bg-gray-50">
           <p><strong>File Name:</strong> {entry.file_name}</p>
           <p><strong>Diagnosis:</strong> {entry.provisional_diagnosis}</p>
           <p><strong>Confidence Score:</strong> {confidence[index]}</p>
