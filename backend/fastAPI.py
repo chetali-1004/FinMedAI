@@ -131,7 +131,7 @@ def gpt_output(image_file):
                             The first line should contain the Provisional diagnosis, and the confidence score should be on the second line.
 
                             *Even if the diagnosis are written in multiple lines in the image give the output in one line as diagnosis_value.*
-                            ''' 
+                                '''
                         },
                         {
                             "type": "image_url",
@@ -195,10 +195,10 @@ def llm_output(diagnosis_value, confidence_value):
     # )
     prompt = (
     f"""Given the input Provisional Diagnosis and Confidence Score from text extraction model, apply medical context to provide the corrected diagnosis. 
-        Do not include any medical tests as a diagnosis.
        - If the Confidence Score is high (>=0.95), make very minimal changes. In this case you can return a high confidence.(>0.95)
        - If the Confidence Score is low (<0.95), correct the diagnosis accordingly. Return a low confidence (<0.95) when not sure.
-       Expand the commonly used medical abbreviations carefully. But dont change diagnoses meaning overall
+       Expand the commonly used medical abbreviations carefully only when necessary. Don't change any word if its corrected spelled and has medical relevance.
+       Don't add any more words than necessary. 
 
        Different diagnosis should be separated by , compulsorily.
 
@@ -259,36 +259,26 @@ icd_dict = dict(zip(icd_data['Common_Code'], icd_data['Diagnosis']))
 # Get the list of diagnoses for fuzzy matching
 icd_descriptions = list(icd_dict.values())
 def map_icd10_codes(lst_of_diagnosis):
-
-  # Dictionary to store the results
+# Dictionary to store the results
   diagnosis_to_icd = {}
 
   # Iterate over each diagnosis in the list
   for diagnosis in lst_of_diagnosis:
       # Use fuzzy matching to find all matches
-      all_matches = process.extract(diagnosis, icd_descriptions)
+      all_matches = process.extract(diagnosis, icd_descriptions, scorer = fuzz.partial_ratio)
       
       # Filter out matches below the confidence threshold
       filtered_matches = [match for match in all_matches if match[1] >= confidence_threshold]
-      # match_dict = {diagnosis: filtered_matches}
-      # print(match_dict)
-      
+      match_dict = {diagnosis: filtered_matches}
+      print(match_dict)
+      # print(int(len(filtered_matches)/2))
       # If there are no matches that meet the threshold, mark it as low confidence
       if not filtered_matches:
           diagnosis_to_icd[diagnosis] = "No matching code found (low confidence)"
       else:
-          # Sort the filtered matches based on score in descending order
-          filtered_matches = sorted(filtered_matches, key=lambda x: x[1], reverse=True)
+          # If matches meet the threshold, choose the best one (highest score)
+          best_match_description, best_score = filtered_matches[0]#int(len(filtered_matches)/2)
           
-          # Check if the top match has a higher score than the rest
-          top_score = filtered_matches[0][1]
-          if len(filtered_matches) == 1 or all(m[1] < top_score for m in filtered_matches[1:]):
-              # If the top score is clearly higher than the others, choose it
-              best_match_description, best_score = filtered_matches[0]
-          else:
-              # If multiple matches have the same or similar scores, choose the middle one
-              middle_index = len(filtered_matches) // 2
-              best_match_description, best_score = filtered_matches[middle_index]
           
           # Find the corresponding ICD code for the best match
           matching_code = [code for code, diag in icd_dict.items() if diag == best_match_description]
