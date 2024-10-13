@@ -3,7 +3,7 @@ import { useState } from "react";
 const JsonOutputDisplay = ({ jsonList, confidence, updateDiagnosis , uploadedFileURL}) => {
   // State to track which entry is being modified
   const [isModifying, setIsModifying] = useState(null);
-  const [modifiedDiagnosis, setModifiedDiagnosis] = useState("");
+  const [modifiedDiagnosis, setModifiedDiagnosis] = useState(""); 
 
   // Handler for accepting or modifying diagnosis
   const handleAcceptOrModify = (index) => {
@@ -19,9 +19,12 @@ const JsonOutputDisplay = ({ jsonList, confidence, updateDiagnosis , uploadedFil
       updatedDiagnosis[index].provisional_diagnosis = modifiedDiagnosis;
     }
   
+    console.log(uploadedFileURL);
+    console.log(updatedDiagnosis[index].provisional_diagnosis);
     // Call updateDiagnosis with the correct diagnosis and corresponding uploaded file URL
-    updateDiagnosis([updatedDiagnosis[index].provisional_diagnosis, uploadedFileURL[index]]);
+    updateDiagnosis(updatedDiagnosis[index].provisional_diagnosis, uploadedFileURL[index]);
   };
+  
   
 
   // Handler for copy to clipboard

@@ -85,7 +85,7 @@ const Header = () => {
         });
   
         const response = await fetch(
-          "https://be9c-14-142-131-190.ngrok-free.app/process_images",
+          "https://bc5c-14-142-131-190.ngrok-free.app/process_images",
           {
             method: "POST",
             body: formData,
@@ -134,8 +134,10 @@ const Header = () => {
   );
   
 
-  const updateDiagnosis = async (provisionalDiagnosis, uploadedFileURL) => {
-    console.log(uploadedFileURL);
+  const updateDiagnosis = async (provisionalDiagnosis, prop1) => {
+    console.log(prop1);
+    const urls = prop1.split(",");
+    const newDiagnosis = provisionalDiagnosis.split(","); 
     try {
       const response = await fetch("http://localhost:3000/update", {
         method: "POST",
@@ -146,8 +148,8 @@ const Header = () => {
           name: patientName,
           email: email,
           phone: phoneNumber,
-          diagnoses: provisionalDiagnosis,
-          prescriptions: uploadedFileURL.map((url) => ({
+          diagnoses: newDiagnosis,
+          prescriptions: urls.map((url) => ({
             extractedDiagnosis: url,
           })),
         }),
