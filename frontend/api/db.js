@@ -1,9 +1,7 @@
 const mongoose = require("mongoose");
 
 mongoose
-  .connect(
-    "mongodb+srv://mern-book-store:Jr41tXRsUTBGlF8r@cluster0.mlvki.mongodb.net/bajaj_hackrx_new2"
-  )
+  .connect("")
   .then(() => console.log("connected to db"))
   .catch((err) => console.log("mongo conneection failed", err));
 
